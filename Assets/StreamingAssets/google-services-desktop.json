@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "844283985672",
+    "firebase_url": "https://lineball-57aaa-default-rtdb.firebaseio.com",
+    "project_id": "lineball-57aaa",
+    "storage_bucket": "lineball-57aaa.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:844283985672:android:178eb6bad8abd9f94d36bd",
+        "android_client_info": {
+          "package_name": "com.MNSGCompany.com.unity.Lineball"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "844283985672-e9th047m8v9teu1cpudd2smgck9r76bj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPnLFNywBZRvYES-D-5Nf7G9P0Cchb4fw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "844283985672-e9th047m8v9teu1cpudd2smgck9r76bj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

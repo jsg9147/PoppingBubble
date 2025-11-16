@@ -32,7 +32,7 @@ public class BallController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (dropTimer < dropInterval)
+        if (dropTimer <= dropInterval)
         {
             dropTimer += Time.deltaTime;
         }

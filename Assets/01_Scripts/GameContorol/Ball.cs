@@ -5,7 +5,6 @@ using System.Linq;
 
 public class Ball : MonoBehaviour
 {
-    private Dictionary<Ball, List<Ball>> cachedConnectedBalls = new Dictionary<Ball, List<Ball>>();
     private bool removeConnectedBallsExecuted = false;
     public int colorNum;
     public Sprite contectWallEmojiSprite;
@@ -18,10 +17,7 @@ public class Ball : MonoBehaviour
     [HideInInspector] public GameObject effectPrefab;
 
     public bool isRemoved = false;
-    GameManager gameManager;
 
-
-    // New Code
     HashSet<GameObject> leftCollisions = new HashSet<GameObject>();
     HashSet<GameObject> rightCollisions = new HashSet<GameObject>();
     public BallController ballController;
@@ -63,10 +59,11 @@ public class Ball : MonoBehaviour
                 if (collidedBall.isRemoved)
                     return;
 
-                if (collidedBall.colorNum == colorNum)
+                if (collidedBall.colorNum == colorNum && !connectedBalls.Contains(collidedBall))
                 {
                     connectedBalls.Add(collidedBall);
                 }
+
             }
         }
         catch (System.NullReferenceException ex)
@@ -95,37 +92,12 @@ public class Ball : MonoBehaviour
         }
     }
 
-    bool HasBothWallCheck()
-    {
-        if (isRemoved || removeConnectedBallsExecuted || (!GetHasRightWall() && !GetHasLeftWall()))
-            return false;
-
-        bool rightWallTouch = GetHasRightWall();
-        bool leftWallTouch = GetHasLeftWall();
-
-        foreach (Ball targetBall in GetConnectedBallList())
-        {
-            if (targetBall.GetHasLeftWall())
-            {
-                leftWallTouch = true;
-            }
-            if (targetBall.GetHasRightWall())
-            {
-                rightWallTouch = true;
-            }
-        }
-
-        return leftWallTouch && rightWallTouch;
-    }
 
     public List<Ball> GetConnectedBallList()
     {
-        cachedConnectedBalls.Clear();
         List<Ball> connectedAllBalls = new List<Ball>(connectedBalls);
         List<Ball> visitedBalls = new List<Ball>();
         RecursiveFindConnectedBalls(this, connectedAllBalls, visitedBalls);
-
-        cachedConnectedBalls[this] = connectedAllBalls;
 
         return connectedAllBalls;
     }
@@ -176,73 +148,121 @@ public class Ball : MonoBehaviour
         yield return new WaitForSeconds(1f);
         Destroy(gameObject);
     }
-
     void SetSideWallCollision(Collision2D collision, bool isEnter)
     {
         if (!collision.gameObject.CompareTag("Left") && !collision.gameObject.CompareTag("Right"))
-        {
             return;
-        }
 
         if (isEnter)
         {
             if (collision.gameObject.CompareTag("Left"))
-            {
                 leftCollisions.Add(collision.gameObject);
-            }
             if (collision.gameObject.CompareTag("Right"))
-            {
                 rightCollisions.Add(collision.gameObject);
-            }
-            emojiSpriteRenderer.sprite = contectWallEmojiSprite;
         }
         else
         {
             if (collision.gameObject.CompareTag("Left"))
-            {
                 leftCollisions.Remove(collision.gameObject);
-            }
             if (collision.gameObject.CompareTag("Right"))
-            {
                 rightCollisions.Remove(collision.gameObject);
-            }
+        }
+
+        // 최종 상태 기준으로 이모지 결정
+        if (GetHasLeftWall() || GetHasRightWall())
+            emojiSpriteRenderer.sprite = contectWallEmojiSprite;
+        else
             emojiSpriteRenderer.sprite = originSprite;
-        }
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        SetSideWallCollision(collision, true);
-        ConnectedBallHandle(collision);
 
-        if (HasBothWallCheck())
+    void TryRemoveIfBothWalls()
+    {
+        if (isRemoved || removeConnectedBallsExecuted)
+            return;
+
+        // 1. 전체 그룹 구하기
+        List<Ball> connectedAllBalls = GetConnectedBallList();
+        connectedAllBalls.Add(this);
+
+        // 2. 그룹 기준으로 왼/오 벽 닿음 체크
+        bool leftWallTouch = false;
+        bool rightWallTouch = false;
+
+        foreach (var b in connectedAllBalls)
         {
-            connectedBalls.Add(this);
-            ballController.RemoveConnectedBalls(connectedBalls);
-            removeConnectedBallsExecuted = true; // 플래그 설정
+            if (b.isRemoved) continue;
+
+            if (b.GetHasLeftWall()) leftWallTouch = true;
+            if (b.GetHasRightWall()) rightWallTouch = true;
         }
 
-        if (collision.gameObject.CompareTag("EndLine"))
+        // 3. 둘 다 있으면 제거
+        if (leftWallTouch && rightWallTouch)
         {
-            gameManager.GameOver();
-        }
-    }
-
-    void OnCollisionStay2D(Collision2D collision)
-    {
-        SetSideWallCollision(collision, true);
-
-        if (HasBothWallCheck() && !removeConnectedBallsExecuted)
-        {
-            List<Ball> connectedAllBalls = GetConnectedBallList();
-            connectedAllBalls.Add(this);
+            removeConnectedBallsExecuted = true;
             ballController.RemoveConnectedBalls(connectedAllBalls);
         }
     }
+    // 같은 색으로 연결된 그룹끼리 이모지 통일
+    void SyncGroupEmoji()
+    {
+        // 1. 이 공을 포함한 같은 색 연결 그룹 가져오기
+        List<Ball> group = GetConnectedBallList();
+        if (!group.Contains(this))
+            group.Add(this);
+
+        // 2. 이 그룹의 기준 이모지 하나 정하기
+        //    - 심플하게: "현재 이 공의 originSprite"를 기준으로 사용
+        Sprite groupEmoji = originSprite;
+
+        foreach (var b in group)
+        {
+            if (b == null || b.isRemoved)
+                continue;
+
+            // 그룹 공들의 '원래 이모지'를 다 이걸로 통일
+            b.originSprite = groupEmoji;
+
+            // 벽에 닿아있지 않은 애들만 실제 표시도 그룹 이모지로 맞추기
+            if (!b.GetHasLeftWall() && !b.GetHasRightWall())
+            {
+                b.emojiSpriteRenderer.sprite = groupEmoji;
+            }
+        }
+    }
+
+void OnCollisionEnter2D(Collision2D collision)
+{
+    SetSideWallCollision(collision, true);
+    ConnectedBallHandle(collision);
+
+    // 같은 색으로 연결된 그룹끼리 이모지 통일
+    SyncGroupEmoji();
+
+    TryRemoveIfBothWalls();
+
+    if (collision.gameObject.CompareTag("EndLine"))
+    {
+        GameManager.instance.GameOver();
+    }
+}
+
+void OnCollisionStay2D(Collision2D collision)
+{
+    SetSideWallCollision(collision, true);
+    ConnectedBallHandle(collision);   // Stay에서도 관계가 바뀔 수 있으면 유지
+
+    // 그룹 이모지 재동기화
+    SyncGroupEmoji();
+
+    TryRemoveIfBothWalls();
+}
+
     void OnCollisionExit2D(Collision2D collision)
     {
         SetSideWallCollision(collision, false);
         DisconnectBallHandle(collision);
-        removeConnectedBallsExecuted = false; // 플래그 재설정
     }
+
 }

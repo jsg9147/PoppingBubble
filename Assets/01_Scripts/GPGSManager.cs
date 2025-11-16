@@ -38,7 +38,7 @@ public class GPGSManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        PlayGamesPlatform.Activate();
+        //PlayGamesPlatform.Activate();
     }
 
     async void Start()
@@ -81,28 +81,28 @@ public class GPGSManager : MonoBehaviour
     public Task LoginGooglePlayGames()
     {
         var tcs = new TaskCompletionSource<object>();
-        PlayGamesPlatform.Instance.Authenticate((success) =>
-        {
-            if (success == SignInStatus.Success)
-            {
-                Debug.Log("Login with Google Play games successful.");
-                PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
-                {
-                    Debug.Log("Authorization code: " + code);
-                    Token = code;
-                    // This token serves as an example to be used for SignInWithGooglePlayGames
-                    Firebase.Auth.Credential credential = Firebase.Auth.PlayGamesAuthProvider.GetCredential(Token);
-                    auth.SignInWithCredentialAsync(credential);
-                    tcs.SetResult(null);
-                });
-            }
-            else
-            {
-                Error = "Failed to retrieve Google play games authorization code";
-                Debug.Log("Login Unsuccessful");
-                tcs.SetException(new Exception("Failed"));
-            }
-        });
+        //PlayGamesPlatform.Instance.Authenticate((success) =>
+        //{
+        //    if (success == SignInStatus.Success)
+        //    {
+        //        Debug.Log("Login with Google Play games successful.");
+        //        PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
+        //        {
+        //            Debug.Log("Authorization code: " + code);
+        //            Token = code;
+        //            // This token serves as an example to be used for SignInWithGooglePlayGames
+        //            Firebase.Auth.Credential credential = Firebase.Auth.PlayGamesAuthProvider.GetCredential(Token);
+        //            auth.SignInWithCredentialAsync(credential);
+        //            tcs.SetResult(null);
+        //        });
+        //    }
+        //    else
+        //    {
+        //        Error = "Failed to retrieve Google play games authorization code";
+        //        Debug.Log("Login Unsuccessful");
+        //        tcs.SetException(new Exception("Failed"));
+        //    }
+        //});
         return tcs.Task;
     }
 

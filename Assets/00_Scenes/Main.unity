@@ -7760,6 +7760,7 @@ MonoBehaviour:
   ballSprites:
   - {fileID: 21300000, guid: 0f8608fef1abb8942ab02b94ec51aa39, type: 3}
   - {fileID: 21300000, guid: 0da81f24febf38b41895d3e0e498157d, type: 3}
+  - {fileID: 21300000, guid: a15677cf077692944871cf6d8634bc0c, type: 3}
   emojiSprites:
   - {fileID: 21300000, guid: c37900d04a727694aa38e3c0125fd6a7, type: 3}
   - {fileID: 21300000, guid: 0f12edd13a0bac94b8ae6a311e871239, type: 3}
